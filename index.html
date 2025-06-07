@@ -193,10 +193,10 @@
       <button class="audio-button" id="pauseBtn" disabled>⏸ Pausar música</button>
     </div>
 
-    <audio id="audio" loop>
-      <source src="https://cdn.pixabay.com/download/audio/2021/09/09/audio_90af9d89e6.mp3?filename=relaxing-ambient-11058.mp3" type="audio/mpeg" />
-      Seu navegador não suporta áudio.
-    </audio>
+   <audio id="audio" loop>
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_3c349d1a6a.mp3?filename=relaxing-ambient-6397.mp3" type="audio/mpeg" />
+  Seu navegador não suporta áudio.
+</audio>
   </div>
 
   <script>
@@ -312,17 +312,18 @@
     startDateEl.textContent = `Contagem desde ${formatarData(dataInicio)}`;
 
     // Controle de áudio
-    playBtn.onclick = () => {
-      audio.play();
-      playBtn.disabled = true;
-      pauseBtn.disabled = false;
-    };
-
-    pauseBtn.onclick = () => {
-      audio.pause();
-      playBtn.disabled = false;
-      pauseBtn.disabled = true;
-    };
+    playBtn.addEventListener("click", () => {
+  audio.play().catch(() => {
+    alert("Navegador bloqueou o áudio automático. Toque no botão para ativar.");
+  });
+  playBtn.disabled = true;
+  pauseBtn.disabled = false;
+});
+pauseBtn.addEventListener("click", () => {
+  audio.pause();
+  playBtn.disabled = false;
+  pauseBtn.disabled = true;
+});
   </script>
 </body>
 </html>
