@@ -1,16 +1,13 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" >
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Tempo Online Detalhado</title>
+  <title>Tempo Online Atualizado</title>
   <style>
     * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+      margin: 0; padding: 0; box-sizing: border-box;
     }
-
     body, html {
       height: 100%;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -22,42 +19,58 @@
       flex-direction: column;
       user-select: none;
     }
-
     .container {
       text-align: center;
       background: rgba(255, 255, 255, 0.85);
-      padding: 40px 60px;
+      padding: 40px 30px;
       border-radius: 15px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-      width: 320px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      width: 350px;
     }
-
     .message {
       font-size: 1.5rem;
       margin-bottom: 20px;
       font-weight: 600;
       letter-spacing: 0.05em;
     }
-
     .timer {
-      font-size: 1.3rem;
-      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
       font-family: 'Courier New', Courier, monospace;
+      font-weight: 700;
       color: #334155;
-      letter-spacing: 0.05em;
-      line-height: 1.6;
+      user-select: text;
     }
-
+    .time-segment {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 40px;
+    }
+    .number {
+      font-size: 2.4rem;
+      line-height: 1.1;
+      letter-spacing: 0.1em;
+    }
+    .label {
+      font-size: 0.9rem;
+      margin-top: 4px;
+      color: #556677;
+      user-select: none;
+    }
     @media (max-width: 400px) {
       .container {
         width: 90%;
-        padding: 30px 20px;
+        padding: 30px 15px;
       }
       .message {
-        font-size: 1.2rem;
+        font-size: 1.3rem;
       }
-      .timer {
-        font-size: 1rem;
+      .number {
+        font-size: 2rem;
+      }
+      .label {
+        font-size: 0.8rem;
       }
     }
   </style>
@@ -71,9 +84,16 @@
   </div>
 
   <script>
-    let segundosTotais = parseInt(localStorage.getItem('tempoOnline')) || 0;
+    // Pega o timestamp da primeira visita, ou salva agora se não existir
+    let primeiroAcesso = localStorage.getItem('primeiroAcesso');
+    if (!primeiroAcesso) {
+      primeiroAcesso = Date.now();
+      localStorage.setItem('primeiroAcesso', primeiroAcesso);
+    } else {
+      primeiroAcesso = parseInt(primeiroAcesso);
+    }
 
-    function formatarDetalhado(segundos) {
+    function formatarTempoSegmentado(segundos) {
       const anos = Math.floor(segundos / (365 * 24 * 3600));
       segundos %= 365 * 24 * 3600;
 
@@ -89,25 +109,31 @@
       const minutos = Math.floor(segundos / 60);
       segundos %= 60;
 
-      const pad = (n) => (n < 10 ? "0" + n : n);
+      function criarSegmento(numero, label) {
+        return `
+          <div class="time-segment">
+            <div class="number">${numero}</div>
+            <div class="label">${label}</div>
+          </div>
+        `;
+      }
 
-      return `
-        ${anos} ano${anos !== 1 ? 's' : ''} <br/>
-        ${meses} mês${meses !== 1 ? 'es' : ''} <br/>
-        ${dias} dia${dias !== 1 ? 's' : ''} <br/>
-        ${horas} hora${horas !== 1 ? 's' : ''} <br/>
-        ${minutos} minuto${minutos !== 1 ? 's' : ''} <br/>
-        ${pad(segundos)} segundo${segundos !== 1 ? 's' : ''}
-      `;
+      return (
+        criarSegmento(anos, anos === 1 ? 'ano' : 'anos') +
+        criarSegmento(meses, meses === 1 ? 'mês' : 'meses') +
+        criarSegmento(dias, dias === 1 ? 'dia' : 'dias') +
+        criarSegmento(horas, horas === 1 ? 'hora' : 'horas') +
+        criarSegmento(minutos, minutos === 1 ? 'minuto' : 'minutos') +
+        criarSegmento(segundos, segundos === 1 ? 'segundo' : 'segundos')
+      );
     }
 
     function atualizarTimer() {
-      segundosTotais++;
-      localStorage.setItem('tempoOnline', segundosTotais);
-      document.getElementById('timer').innerHTML = formatarDetalhado(segundosTotais);
+      const agora = Date.now();
+      const diffSegundos = Math.floor((agora - primeiroAcesso) / 1000);
+      document.getElementById('timer').innerHTML = formatarTempoSegmentado(diffSegundos);
     }
 
-    // Atualiza a cada segundo e já mostra ao carregar
     atualizarTimer();
     setInterval(atualizarTimer, 1000);
   </script>
