@@ -6,37 +6,54 @@
   <title>Tempo Online</title>
   <style>
     :root {
-      --bg: #f9f9f9;
-      --text: #111;
-      --accent: #007aff;
-      --card: #ffffff;
-      --shadow: rgba(0, 0, 0, 0.08);
+      --bg-light: #f9f9f9;
+      --text-light: #111;
+      --accent-light: #007aff;
+      --card-light: #ffffff;
+      --shadow-light: rgba(0, 0, 0, 0.08);
+
+      --bg-dark: #121212;
+      --text-dark: #eee;
+      --accent-dark: #0a84ff;
+      --card-dark: #1e1e1e;
+      --shadow-dark: rgba(0, 0, 0, 0.5);
     }
 
-    * {
+    body {
       margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    html, body {
-      height: 100%;
-      background: var(--bg);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
-      color: var(--text);
+      min-height: 100vh;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    body.light {
+      background: var(--bg-light);
+      color: var(--text-light);
+    }
+
+    body.dark {
+      background: var(--bg-dark);
+      color: var(--text-dark);
     }
 
     .container {
-      background: var(--card);
+      background: var(--card-light);
       padding: 32px;
       border-radius: 20px;
-      box-shadow: 0 10px 30px var(--shadow);
+      box-shadow: 0 10px 30px var(--shadow-light);
       text-align: center;
       max-width: 90%;
       width: 400px;
+      transition: background 0.3s, box-shadow 0.3s, color 0.3s;
+    }
+
+    body.dark .container {
+      background: var(--card-dark);
+      box-shadow: 0 10px 30px var(--shadow-dark);
+      color: var(--text-dark);
     }
 
     .title {
@@ -50,6 +67,7 @@
       grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
       gap: 16px;
       justify-items: center;
+      user-select: none;
     }
 
     .segment {
@@ -62,8 +80,13 @@
     .number {
       font-size: 2.2rem;
       font-weight: 700;
-      color: var(--accent);
+      color: var(--accent-light);
       margin-bottom: 4px;
+      transition: color 0.3s;
+    }
+
+    body.dark .number {
+      color: var(--accent-dark);
     }
 
     .label {
@@ -71,6 +94,79 @@
       color: #555;
       text-transform: lowercase;
       letter-spacing: 0.5px;
+      transition: color 0.3s;
+    }
+
+    body.dark .label {
+      color: #bbb;
+    }
+
+    .button-copy {
+      margin-top: 24px;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 12px;
+      background-color: var(--accent-light);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      user-select: none;
+    }
+
+    .button-copy:hover {
+      background-color: #005ecb;
+    }
+
+    body.dark .button-copy {
+      background-color: var(--accent-dark);
+    }
+
+    body.dark .button-copy:hover {
+      background-color: #0046b3;
+    }
+
+    .start-date {
+      margin-top: 20px;
+      font-size: 0.9rem;
+      color: #777;
+      user-select: none;
+      transition: color 0.3s;
+    }
+
+    body.dark .start-date {
+      color: #999;
+    }
+
+    .audio-controls {
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .audio-button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 12px;
+      background-color: var(--accent-light);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      user-select: none;
+    }
+
+    .audio-button:hover {
+      background-color: #005ecb;
+    }
+
+    body.dark .audio-button {
+      background-color: var(--accent-dark);
+    }
+
+    body.dark .audio-button:hover {
+      background-color: #0046b3;
     }
 
     @media (max-width: 360px) {
@@ -87,27 +183,70 @@
   <div class="container">
     <div class="title">Este site está online há</div>
     <div class="timer" id="timer"></div>
+
+    <button class="button-copy" id="copyBtn">Copiar tempo</button>
+
+    <div class="start-date" id="startDate"></div>
+
+    <div class="audio-controls">
+      <button class="audio-button" id="playBtn">▶️ Tocar música</button>
+      <button class="audio-button" id="pauseBtn" disabled>⏸ Pausar música</button>
+    </div>
+
+    <audio id="audio" loop>
+      <source src="https://cdn.pixabay.com/download/audio/2021/09/09/audio_90af9d89e6.mp3?filename=relaxing-ambient-11058.mp3" type="audio/mpeg" />
+      Seu navegador não suporta áudio.
+    </audio>
   </div>
 
   <script>
-    // data fixa de início — 07 de junho de 2025 às 16:45 (Brasília)
-    const dataInicio = new Date("2025-06-07T19:45:00Z");
+    // Data fixa de início — 07/06/2025 16:40 Brasília (UTC 19:40)
+    const dataInicio = new Date("2025-06-07T19:40:00Z");
 
-    function formatarTempo(segundos) {
-      const anos = Math.floor(segundos / (365 * 24 * 3600));
-      segundos %= 365 * 24 * 3600;
+    const timerEl = document.getElementById("timer");
+    const startDateEl = document.getElementById("startDate");
+    const copyBtn = document.getElementById("copyBtn");
+    const playBtn = document.getElementById("playBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const audio = document.getElementById("audio");
 
-      const meses = Math.floor(segundos / (30 * 24 * 3600));
-      segundos %= 30 * 24 * 3600;
+    // Detecta modo dark ou light do sistema
+    function aplicarTema() {
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+        document.body.classList.remove('light');
+      } else {
+        document.body.classList.add('light');
+        document.body.classList.remove('dark');
+      }
+    }
 
-      const dias = Math.floor(segundos / (24 * 3600));
-      segundos %= 24 * 3600;
+    aplicarTema();
 
-      const horas = Math.floor(segundos / 3600);
-      segundos %= 3600;
+    // Atualiza tema se usuário mudar preferencia enquanto site aberto
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', aplicarTema);
 
-      const minutos = Math.floor(segundos / 60);
-      segundos %= 60;
+    // Função para formatar o tempo com milissegundos
+    function formatarTempo(msTotais) {
+      let segundosTotais = Math.floor(msTotais / 1000);
+      const ms = msTotais % 1000;
+
+      const anos = Math.floor(segundosTotais / (365 * 24 * 3600));
+      segundosTotais %= 365 * 24 * 3600;
+
+      const meses = Math.floor(segundosTotais / (30 * 24 * 3600));
+      segundosTotais %= 30 * 24 * 3600;
+
+      const dias = Math.floor(segundosTotais / (24 * 3600));
+      segundosTotais %= 24 * 3600;
+
+      const horas = Math.floor(segundosTotais / 3600);
+      segundosTotais %= 3600;
+
+      const minutos = Math.floor(segundosTotais / 60);
+      segundosTotais %= 60;
+
+      const segundos = segundosTotais;
 
       const unidades = [
         { valor: anos, nome: anos === 1 ? "ano" : "anos" },
@@ -116,6 +255,7 @@
         { valor: horas, nome: horas === 1 ? "hora" : "horas" },
         { valor: minutos, nome: minutos === 1 ? "minuto" : "minutos" },
         { valor: segundos, nome: segundos === 1 ? "segundo" : "segundos" },
+        { valor: ms, nome: "ms" },
       ];
 
       return unidades.map(u => `
@@ -126,14 +266,25 @@
       `).join('');
     }
 
+    // Animação simples nos números
+    function animarNumeros() {
+      const numbers = document.querySelectorAll(".number");
+      numbers.forEach(num => {
+        num.style.transform = "scale(1.2)";
+        num.style.color = "#ff9500";
+        setTimeout(() => {
+          num.style.transform = "";
+          num.style.color = "";
+        }, 300);
+      });
+    }
+
     function atualizar() {
       const agora = new Date();
-      const segundosTotais = Math.floor((agora - dataInicio) / 1000);
-      document.getElementById("timer").innerHTML = formatarTempo(segundosTotais);
+      const msTotais = agora - dataInicio;
+      timerEl.innerHTML = formatarTempo(msTotais);
+      animarNumeros();
     }
 
     atualizar();
-    setInterval(atualizar, 1000);
-  </script>
-</body>
-</html>
+    setInterval(at
