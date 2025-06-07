@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Tempo Online</title>
+  <title>Tempo Online Detalhado</title>
   <style>
-    /* Reset básico */
     * {
       margin: 0;
       padding: 0;
@@ -41,11 +40,12 @@
     }
 
     .timer {
-      font-size: 3rem;
+      font-size: 1.3rem;
       font-weight: 700;
       font-family: 'Courier New', Courier, monospace;
       color: #334155;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.05em;
+      line-height: 1.6;
     }
 
     @media (max-width: 400px) {
@@ -57,7 +57,7 @@
         font-size: 1.2rem;
       }
       .timer {
-        font-size: 2.5rem;
+        font-size: 1rem;
       }
     }
   </style>
@@ -65,29 +65,51 @@
 <body>
   <div class="container">
     <div class="message">Este site está online há</div>
-    <div class="timer" id="timer">00:00:00</div>
+    <div class="timer" id="timer">
+      <!-- tempo detalhado vai aparecer aqui -->
+    </div>
   </div>
 
   <script>
-    let segundos = parseInt(localStorage.getItem('tempoOnline')) || 0;
+    let segundosTotais = parseInt(localStorage.getItem('tempoOnline')) || 0;
 
-    function formatarTempo(s) {
-      const hrs = Math.floor(s / 3600);
-      const mins = Math.floor((s % 3600) / 60);
-      const segs = s % 60;
+    function formatarDetalhado(segundos) {
+      const anos = Math.floor(segundos / (365 * 24 * 3600));
+      segundos %= 365 * 24 * 3600;
+
+      const meses = Math.floor(segundos / (30 * 24 * 3600));
+      segundos %= 30 * 24 * 3600;
+
+      const dias = Math.floor(segundos / (24 * 3600));
+      segundos %= 24 * 3600;
+
+      const horas = Math.floor(segundos / 3600);
+      segundos %= 3600;
+
+      const minutos = Math.floor(segundos / 60);
+      segundos %= 60;
 
       const pad = (n) => (n < 10 ? "0" + n : n);
-      return `${pad(hrs)}:${pad(mins)}:${pad(segs)}`;
+
+      return `
+        ${anos} ano${anos !== 1 ? 's' : ''} <br/>
+        ${meses} mês${meses !== 1 ? 'es' : ''} <br/>
+        ${dias} dia${dias !== 1 ? 's' : ''} <br/>
+        ${horas} hora${horas !== 1 ? 's' : ''} <br/>
+        ${minutos} minuto${minutos !== 1 ? 's' : ''} <br/>
+        ${pad(segundos)} segundo${segundos !== 1 ? 's' : ''}
+      `;
     }
 
     function atualizarTimer() {
-      segundos++;
-      document.getElementById("timer").textContent = formatarTempo(segundos);
-      localStorage.setItem('tempoOnline', segundos);
+      segundosTotais++;
+      localStorage.setItem('tempoOnline', segundosTotais);
+      document.getElementById('timer').innerHTML = formatarDetalhado(segundosTotais);
     }
 
+    // Atualiza a cada segundo e já mostra ao carregar
+    atualizarTimer();
     setInterval(atualizarTimer, 1000);
-    document.getElementById("timer").textContent = formatarTempo(segundos);
   </script>
 </body>
 </html>
